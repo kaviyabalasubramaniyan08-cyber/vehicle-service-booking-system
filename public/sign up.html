@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign Up</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="signup-container">
+    <h2>Create New Account</h2>
+    <form id="signupForm">
+        <div class="input-group">
+            <label>Full Name</label>
+            <input type="text" placeholder="Enter your name" required>
+        </div>
+
+        <div class="input-group">
+            <label>Email ID</label>
+            <input type="email" placeholder="Enter your email" required>
+        </div>
+
+        <div class="input-group">
+            <label>Password</label>
+            <input type="password" id="pass" placeholder="Create password" required>
+        </div>
+
+        <div class="input-group">
+            <label>Confirm Password</label>
+            <input type="password" id="confirmPass" placeholder="Confirm password" required>
+        </div>
+
+        <button type="submit">Sign Up</button>
+    </form>
+    
+    <p>Already have an account? <a href="login.html">Login here</a></p>
+</div>
+
+<script>
+    document.getElementById('signupForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const p1 = document.getElementById('pass').value;
+        const p2 = document.getElementById('confirmPass').value;
+
+        if(p1 !== p2) {
+            alert("Passwords mismatch! Check pannunga.");
+        } else {
+            alert("Registration Successful!");
+            // Register aana udane login-ku anupuvom
+            window.location.href = "login.html";
+        }
+    });
+</script>
+
+
+ 
+  <script src="script.js"></script>
+</body>
+</html>

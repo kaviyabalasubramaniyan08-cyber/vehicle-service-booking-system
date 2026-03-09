@@ -1,0 +1,18 @@
+{
+  "name": "vehicle-service-booking-system",
+  "version": "1.0.0",
+  "description": "Vehicle Service Booking System using Node.js, Express and MongoDB",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "author": "Kavi",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.6",
+    "ejs": "^3.1.9",
+    "express": "^4.18.2",
+    "mongoose": "^8.0.3"
+  },
+  "keywords": []
+}

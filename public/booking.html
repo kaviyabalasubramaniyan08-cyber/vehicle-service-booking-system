@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Service Booking</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      padding: 50px;
+      background-color: #f4f4f4;
+    }
+    .booking-container {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0px 0px 10px rgba(0,0,0,0.1);
+      width: 350px;
+    }
+    input, select, button {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    button {
+      background-color: #28a745;
+      color: white;
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    button:hover {
+      background-color: #218838;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="booking-container">
+  <h2>Book Your Service</h2>
+
+  <form id="bookingForm">
+    <label>Vehicle Number:</label>
+    <input type="text" id="vehicleNum" placeholder="TN 01 AB 1234" required>
+
+    <label>Service Type:</label>
+    <select id="serviceType" required>
+      <option value="">-- Select Service --</option>
+      <option value="General Service">General Service</option>
+      <option value="Water Wash">Water Wash</option>
+      <option value="Oil Change">Oil Change</option>
+      <option value="Engine Repair">Engine Repair</option>
+    </select>
+
+    <label>Preferred Date:</label>
+    <input type="date" id="bookingDate" required>
+
+    <label>Preferred Time:</label>
+    <input type="time" id="bookingTime" required>
+
+    <button type="submit">Book Service</button>
+  </form>
+</div>
+
+<script>
+document.getElementById("bookingForm").addEventListener("submit", async function(e) {
+  e.preventDefault();
+
+  const bookingData = {
+    vehicleNumber: document.getElementById("vehicleNum").value,
+    serviceType: document.getElementById("serviceType").value,
+    date: document.getElementById("bookingDate").value,
+    time: document.getElementById("bookingTime").value,
+    status: "Pending"
+  };
+
+  try {
+    const response = await fetch("http://localhost:5000/api/bookings", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(bookingData)
+    });
+
+    const result = await response.json();
+    alert("✅ Booking Successful!");
+
+    // optional local storage for status page
+    localStorage.setItem("lastBooking", JSON.stringify(bookingData));
+
+    window.location.href = "view-status.html";
+
+  } catch (error) {
+    alert("❌ Server error. Make sure backend is running.");
+    console.error(error);
+  }
+});
+</script>
+
+</body>
+</html>

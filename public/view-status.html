@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>View Booking Status</title>
+  <style>
+    body { font-family: Arial, sans-serif; background-color: #f2f2f2; }
+    .container { width: 70%; margin: 50px auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1);}
+    h2 { text-align: center; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
+    th { background-color: #4CAF50; color: white; }
+    a { text-decoration: none; color: white; background: #4CAF50; padding: 8px 15px; border-radius: 5px; }
+    input, button { padding: 8px; margin: 5px; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h2>View Booking Status</h2>
+
+  <input type="text" id="vehicleNumber" placeholder="Enter Vehicle Number">
+  <button onclick="checkStatus()">Check Booking</button>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Booking ID</th>
+        <th>Vehicle Number</th>
+        <th>Service Type</th>
+        <th>Date</th>
+        <th>Time</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody id="bookingTable"></tbody>
+  </table>
+
+  <br>
+  <a href="index.html">Back to Home</a>
+</div>
+
+<script>
+  function checkStatus() {
+    const vehicle = document.getElementById("vehicleNumber").value.trim();
+
+    if (!vehicle) {
+      alert("Please enter vehicle number");
+      return;
+    }
+
+    fetch(`/api/bookings/${vehicle}`)
+      .then(res => {
+        if (!res.ok) throw new Error("Booking not found");
+        return res.json();
+      })
+      .then(data => {
+        const table = document.getElementById("bookingTable");
+        table.innerHTML = ""; // clear previous
+
+        let row = table.insertRow();
+        row.insertCell(0).innerText = data.id;
+        row.insertCell(1).innerText = data.vehicleNumber;
+        row.insertCell(2).innerText = data.serviceType;
+        row.insertCell(3).innerText = data.date;
+        row.insertCell(4).innerText = data.time || "";
+        row.insertCell(5).innerText = data.status;
+      })
+      .catch(err => {
+        const table = document.getElementById("bookingTable");
+        table.innerHTML = "";
+        let row = table.insertRow();
+        let cell = row.insertCell(0);
+        cell.colSpan = 6;
+        cell.innerText = "No booking found";
+      });
+  }
+</script>
+
+</body>
+</html>
