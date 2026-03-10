@@ -79,7 +79,7 @@ document.getElementById("bookingForm").addEventListener("submit", async function
   };
 
   try {
-    const response = await fetch("http://localhost:5000/api/bookings", {
+    const response = await fetch("/api/bookings", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -104,3 +104,4 @@ document.getElementById("bookingForm").addEventListener("submit", async function
 
 </body>
 </html>
+
