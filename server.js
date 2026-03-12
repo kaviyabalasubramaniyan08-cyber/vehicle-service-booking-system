@@ -17,6 +17,15 @@ let bookings = [];
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public/index.html"));
 });
+// Signup page
+app.get("/signup.html", (req, res) => {
+  res.sendFile(path.join(__dirname, "public/signup.html"));
+});
+
+// Login page
+app.get("/login.html", (req, res) => {
+  res.sendFile(path.join(__dirname, "public/login.html"));
+});
 
 // Book Service route
 app.post("/api/bookings", (req, res) => {
@@ -72,3 +81,4 @@ const PORT = 5000;
 app.listen(PORT, () => {
   console.log(`Server started on port ${PORT}`);
 });
+
