@@ -108,7 +108,7 @@ function updateStatus(vehicleNumber) {
   fetch(`/api/bookings/${vehicleNumber}/status`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ status: "Completed" })
+    body: JSON.stringify({ status: "Booking Completed" })
   })
   .then(res => res.json())
   .then(() => loadBookings())
