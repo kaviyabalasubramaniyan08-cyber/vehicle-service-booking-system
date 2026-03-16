@@ -79,10 +79,20 @@
 </div>
 
 <script>
+
+let oldCount = 0;
+
 function loadBookings() {
   fetch("/api/bookings")
     .then(res => res.json())
     .then(data => {
+
+      // ⭐ NEW BOOKING ALERT
+      if(data.length > oldCount){
+        alert("🔥 New Booking Received");
+        oldCount = data.length;
+      }
+
       const table = document.getElementById("bookingTable");
       table.innerHTML = "";
 
@@ -101,6 +111,7 @@ function loadBookings() {
         btn.onclick = () => updateStatus(b.vehicleNumber);
         actionCell.appendChild(btn);
       });
+
     });
 }
 
@@ -115,8 +126,12 @@ function updateStatus(vehicleNumber) {
   .catch(err => alert("Error updating status"));
 }
 
-// Load bookings on page load
+// ⭐ auto refresh
+setInterval(loadBookings,3000);
+
+// first load
 loadBookings();
+
 </script>
 
 </body>
