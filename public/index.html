@@ -1,41 +1,42 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Vehicle Service Booking</title>
-  <link rel="stylesheet" href="styles.css">
+
+  <style>
+    body {
+      margin: 0;
+      text-align: center;
+      font-family: Arial;
+    }
+
+    .container {
+      margin-top: 30px; /* மேல space */
+    }
+
+    h1 {
+      margin-bottom: 10px;
+    }
+
+    button {
+      padding: 5px 10px;  /* small button */
+      font-size: 13px;
+    }
+
+    p {
+      margin-top: 10px;
+    }
+  </style>
+
 </head>
 
 <body>
 
-<!-- 🔹 Loading Message -->
-<p id="loading">⏳ Please wait... Loading service...</p>
-
-<!-- 🔹 Main Content -->
-<div id="mainContent" style="display:none;">
-
-  <div class="hero">
+  <div class="container">
     <h1>Welcome to Vehicle Service Booking</h1>
-
-    <a href="sign up.html">
-      <button>Book Now</button>
-    </a>
+    <button>Book Now</button>
+    <p>© 2026 Vehicle Service Booking</p>
   </div>
-
-  <footer>
-    <p>&copy; 2026 Vehicle Service Booking</p>
-  </footer>
-
-</div>
-
-<!-- 🔹 JavaScript (IMPORTANT) -->
-<script>
-window.onload = function() {
-  document.getElementById("loading").style.display = "none";
-  document.getElementById("mainContent").style.display = "block";
-};
-</script>
 
 </body>
 </html>
