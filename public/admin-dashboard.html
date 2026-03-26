@@ -3,11 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <title>Admin Dashboard</title>
+
   <style>
     body {
       font-family: Arial, sans-serif;
       background-color: #f2f2f2;
     }
+
     .container {
       width: 80%;
       margin: 50px auto;
@@ -16,34 +18,45 @@
       border-radius: 8px;
       box-shadow: 0 0 10px rgba(0,0,0,0.1);
     }
+
     h2 {
       text-align: center;
     }
+
     table {
       width: 100%;
       border-collapse: collapse;
       margin-top: 20px;
     }
+
     th, td {
       border: 1px solid #ddd;
       padding: 10px;
       text-align: center;
     }
+
     th {
       background-color: #4CAF50;
       color: white;
     }
+
     button {
-      padding: 5px 10px;
+      padding: 6px 12px;
       border: none;
       border-radius: 5px;
-      background-color: #4CAF50;
       color: white;
       cursor: pointer;
     }
-    button:hover {
-      background-color: #45a049;
+
+    .completeBtn {
+      background-color: #4CAF50;
     }
+
+    .rejectBtn {
+      background-color: red;
+      margin-left: 10px;
+    }
+
     a {
       display: inline-block;
       margin-top: 20px;
@@ -55,6 +68,7 @@
     }
   </style>
 </head>
+
 <body>
 
 <div class="container">
@@ -87,7 +101,8 @@ function loadBookings() {
     .then(res => res.json())
     .then(data => {
 
-      // ⭐ NEW BOOKING ALERT
+      console.log("DATA:", data); // debug
+
       if(data.length > oldCount){
         alert("🔥 New Booking Received");
         oldCount = data.length;
@@ -97,54 +112,68 @@ function loadBookings() {
       table.innerHTML = "";
 
       data.forEach(b => {
+
         let row = table.insertRow();
+
         row.insertCell(0).innerText = b.id;
         row.insertCell(1).innerText = b.vehicleNumber;
         row.insertCell(2).innerText = b.serviceType;
         row.insertCell(3).innerText = b.date;
         row.insertCell(4).innerText = b.time || "";
-        row.insertCell(5).innerText = b.status;
+
+        let statusCell = row.insertCell(5);
+        statusCell.innerText = b.status || "Pending";
 
         let actionCell = row.insertCell(6);
-        let btn = document.createElement("button");
-        btn.innerText = "Mark Completed";
-        btn.onclick = () => updateStatus(b.vehicleNumber);
-        actionCell.appendChild(btn);
 
+        // ✅ Completed button
+        let completeBtn = document.createElement("button");
+        completeBtn.innerText = "Completed";
+        completeBtn.className = "completeBtn";
+        completeBtn.onclick = () => {
+          statusCell.innerText = "Booking Completed";
+          updateStatus(b.vehicleNumber, "Booking Completed");
+        };
+
+        actionCell.appendChild(completeBtn);
+
+        // ✅ Reject button
         let rejectBtn = document.createElement("button");
-rejectBtn.innerText = "Reject";
-rejectBtn.style.marginLeft = "10px"; // optional space
-rejectBtn.onclick = () => rejectBooking(b.vehicleNumber); // use separate function
-actionCell.appendChild(rejectBtn);
+        rejectBtn.innerText = "Reject";
+        rejectBtn.className = "rejectBtn";
+        rejectBtn.onclick = () => {
+          statusCell.innerText = "Booking Rejected";
+          updateStatus(b.vehicleNumber, "Booking Rejected");
+        };
+
+        actionCell.appendChild(rejectBtn);
       });
 
+    })
+    .catch(err => {
+      console.log(err);
+      alert("❌ Failed to load bookings");
     });
 }
 
-function updateStatus(vehicleNumber) {
+
+// ✅ API call
+function updateStatus(vehicleNumber, status) {
   fetch(`/api/bookings/${vehicleNumber}/status`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ status: "Booking Completed" })
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ status: status })
   })
   .then(res => res.json())
-  .then(() => loadBookings())
-  .catch(err => alert("Error updating status"));
+  .then(() => console.log("Updated"))
+  .catch(err => alert("❌ Error updating status"));
 }
 
-  function rejectBooking(vehicleNumber) {
-  fetch(`/api/bookings/${vehicleNumber}/status`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ status: "Rejected" }) // Mark Completed mathiri
-  })
-  .then(res => res.json())
-  .then(() => loadBookings()) // reload table
-  .catch(err => alert("Error rejecting booking"));
-}
 
-// ⭐ auto refresh
-setInterval(loadBookings,3000);
+// auto refresh
+setInterval(loadBookings, 3000);
 
 // first load
 loadBookings();
