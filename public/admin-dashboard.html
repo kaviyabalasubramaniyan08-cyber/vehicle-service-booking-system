@@ -132,6 +132,17 @@ function updateStatus(vehicleNumber) {
   .catch(err => alert("Error updating status"));
 }
 
+  function rejectBooking(vehicleNumber) {
+  fetch(`/api/bookings/${vehicleNumber}/status`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ status: "Rejected" }) // Mark Completed mathiri
+  })
+  .then(res => res.json())
+  .then(() => loadBookings()) // reload table
+  .catch(err => alert("Error rejecting booking"));
+}
+
 // ⭐ auto refresh
 setInterval(loadBookings,3000);
 
