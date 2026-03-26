@@ -37,13 +37,16 @@
       padding: 5px 10px;
       border: none;
       border-radius: 5px;
-      background-color: #4CAF50;
       color: white;
       cursor: pointer;
+      margin: 2px;
     }
-    button:hover {
-      background-color: #45a049;
-    }
+    .accept-btn { background-color: #4CAF50; }
+    .accept-btn:hover { background-color: #45a049; }
+    .reject-btn { background-color: red; }
+    .reject-btn:hover { background-color: darkred; }
+    .complete-btn { background-color: blue; }
+    .complete-btn:hover { background-color: darkblue; }
     a {
       display: inline-block;
       margin-top: 20px;
@@ -79,59 +82,65 @@
 </div>
 
 <script>
-
-let oldCount = 0;
-
+// Load all bookings from localStorage
 function loadBookings() {
-  fetch("/api/bookings")
-    .then(res => res.json())
-    .then(data => {
+  let bookings = JSON.parse(localStorage.getItem("bookings")) || [];
+  const table = document.getElementById("bookingTable");
+  table.innerHTML = "";
 
-      // ⭐ NEW BOOKING ALERT
-      if(data.length > oldCount){
-        alert("🔥 New Booking Received");
-        oldCount = data.length;
-      }
+  bookings.forEach((b, index) => {
+    let row = table.insertRow();
+    row.insertCell(0).innerText = b.id || index + 1;
+    row.insertCell(1).innerText = b.vehicleNumber;
+    row.insertCell(2).innerText = b.serviceType;
+    row.insertCell(3).innerText = b.date;
+    row.insertCell(4).innerText = b.time || "";
+    row.insertCell(5).innerText = b.status || "Pending";
 
-      const table = document.getElementById("bookingTable");
-      table.innerHTML = "";
+    let actionCell = row.insertCell(6);
 
-      data.forEach(b => {
-        let row = table.insertRow();
-        row.insertCell(0).innerText = b.id;
-        row.insertCell(1).innerText = b.vehicleNumber;
-        row.insertCell(2).innerText = b.serviceType;
-        row.insertCell(3).innerText = b.date;
-        row.insertCell(4).innerText = b.time || "";
-        row.insertCell(5).innerText = b.status;
+    // Accept button
+    let acceptBtn = document.createElement("button");
+    acceptBtn.innerText = "Accept";
+    acceptBtn.className = "accept-btn";
+    acceptBtn.onclick = () => updateStatus(b.id, "Accepted");
 
-        let actionCell = row.insertCell(6);
-        let btn = document.createElement("button");
-        btn.innerText = "Mark Completed";
-        btn.onclick = () => updateStatus(b.vehicleNumber);
-        actionCell.appendChild(btn);
-      });
+    // Reject button
+    let rejectBtn = document.createElement("button");
+    rejectBtn.innerText = "Reject";
+    rejectBtn.className = "reject-btn";
+    rejectBtn.onclick = () => updateStatus(b.id, "Rejected");
 
-    });
+    // Complete button
+    let completeBtn = document.createElement("button");
+    completeBtn.innerText = "Complete";
+    completeBtn.className = "complete-btn";
+    completeBtn.onclick = () => updateStatus(b.id, "Service Completed");
+
+    actionCell.appendChild(acceptBtn);
+    actionCell.appendChild(rejectBtn);
+    actionCell.appendChild(completeBtn);
+  });
 }
 
-function updateStatus(vehicleNumber) {
-  fetch(`/api/bookings/${vehicleNumber}/status`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ status: "Booking Completed" })
-  })
-  .then(res => res.json())
-  .then(() => loadBookings())
-  .catch(err => alert("Error updating status"));
+// Update booking status in localStorage
+function updateStatus(id, status) {
+  let bookings = JSON.parse(localStorage.getItem("bookings")) || [];
+
+  bookings = bookings.map(b => {
+    if (b.id === id) b.status = status;
+    return b;
+  });
+
+  localStorage.setItem("bookings", JSON.stringify(bookings));
+  loadBookings();
 }
 
-// ⭐ auto refresh
-setInterval(loadBookings,3000);
+// Auto refresh every 3 seconds
+setInterval(loadBookings, 3000);
 
-// first load
+// First load
 loadBookings();
-
 </script>
 
 </body>
