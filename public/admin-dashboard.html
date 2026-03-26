@@ -110,6 +110,12 @@ function loadBookings() {
         btn.innerText = "Mark Completed";
         btn.onclick = () => updateStatus(b.vehicleNumber);
         actionCell.appendChild(btn);
+
+        let rejectBtn = document.createElement("button");
+rejectBtn.innerText = "Reject";
+rejectBtn.style.marginLeft = "10px"; // optional space
+rejectBtn.onclick = () => rejectBooking(b.vehicleNumber); // use separate function
+actionCell.appendChild(rejectBtn);
       });
 
     });
