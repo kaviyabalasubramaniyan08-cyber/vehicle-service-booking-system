@@ -1,84 +1,135 @@
 const express = require("express");
 const path = require("path");
+const mongoose = require("mongoose");
 
 const app = express();
 
-// Serve static files
-app.use(express.static(path.join(__dirname, "public")));
+// 1. MongoDB Connection
+mongoose.connect('mongodb://127.0.0.1:27017/vehicle_db')
+  .then(() => console.log('✅ MongoDB Connected Successfully!'))
+  .catch(err => {
+    console.error('❌ Database Connection Error:', err);
+    process.exit(1); 
+  });
 
-// Parse JSON & form data
+// 2. Booking Schema & Model
+const bookingSchema = new mongoose.Schema({
+  vehicleNumber: { type: String, required: true, trim: true },
+  serviceType: { type: String, required: true },
+  date: { type: String, required: true },
+  time: { type: String, required: true },
+  status: { type: String, default: "Pending" },
+  createdAt: { type: Date, default: Date.now }
+}, {
+  // This allows the frontend to see '_id' as 'id'
+  toJSON: { virtuals: true },
+  toObject: { virtuals: true }
+});
+
+// Virtual property to convert _id to id
+bookingSchema.virtual('id').get(function() {
+  return this._id.toHexString();
+});
+
+const Booking = mongoose.model('Booking', bookingSchema);
+
+// Middlewares
+app.use(express.static(path.join(__dirname, "public")));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Memory storage for bookings
-let bookings = [];
+// --- Page Routes ---
 
-// Home page
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public/index.html"));
 });
-// Signup page
+
 app.get("/signup.html", (req, res) => {
   res.sendFile(path.join(__dirname, "public/signup.html"));
 });
 
-// Login page
 app.get("/login.html", (req, res) => {
   res.sendFile(path.join(__dirname, "public/login.html"));
 });
 
-// Book Service route
-app.post("/api/bookings", (req, res) => {
-  const booking = {
-    id: Date.now().toString(),
-    vehicleNumber: req.body.vehicleNumber,
-    serviceType: req.body.serviceType,
-    date: req.body.date,
-    time: req.body.time,
-    status: "Pending"
-  };
+// --- API Routes (Data Handling) ---
 
-  bookings.push(booking);
-  console.log("Booking received:", booking);
+// 3. Create New Booking
+app.post("/api/bookings", async (req, res) => {
+  try {
+    const newBooking = new Booking({
+      vehicleNumber: req.body.vehicleNumber,
+      serviceType: req.body.serviceType,
+      date: req.body.date,
+      time: req.body.time
+    });
 
-  res.json({ message: "Booking received successfully", booking });
+    const savedBooking = await newBooking.save();
+    console.log("New booking saved:", savedBooking);
+    
+    res.json({ 
+      message: "Booking received and saved successfully", 
+      booking: savedBooking 
+    });
+  } catch (err) {
+    console.error("Save Error:", err);
+    res.status(500).json({ message: "Error saving booking to database" });
+  }
 });
 
-// View Status route
-app.get("/api/bookings/:vehicleNumber", (req, res) => {
-  const vehicleNum = req.params.vehicleNumber.toLowerCase().trim();
-  const booking = bookings.find(
-    b => b.vehicleNumber.toLowerCase().trim() === vehicleNum
-  );
+// 4. View Booking Status (Search by Vehicle Number)
+app.get("/api/bookings/:vehicleNumber", async (req, res) => {
+  const vehicleNum = req.params.vehicleNumber.trim();
+  
+  try {
+    const booking = await Booking.findOne({ 
+      vehicleNumber: { $regex: new RegExp("^" + vehicleNum + "$", "i") } 
+    });
 
-  console.log("Fetching booking for:", vehicleNum, "Found:", booking);
-
-  if (booking) res.json(booking);
-  else res.status(404).json({ message: "Booking Not Found" });
+    if (booking) {
+      res.json(booking);
+    } else {
+      res.status(404).json({ message: "Booking Not Found" });
+    }
+  } catch (err) {
+    res.status(500).json({ message: "Error fetching booking status" });
+  }
 });
 
-// Get all bookings (for admin dashboard)
-app.get("/api/bookings", (req, res) => {
-  res.json(bookings);
+// 5. Get All Bookings (For Admin Dashboard)
+app.get("/api/bookings", async (req, res) => {
+  try {
+    const allBookings = await Booking.find().sort({ createdAt: -1 });
+    res.json(allBookings);
+  } catch (err) {
+    res.status(500).json({ message: "Error fetching all bookings" });
+  }
 });
 
-// Update booking status (for admin dashboard)
-app.post("/api/bookings/:vehicleNumber/status", (req, res) => {
-  const vehicleNum = req.params.vehicleNumber.toLowerCase().trim();
-  const booking = bookings.find(
-    b => b.vehicleNumber.toLowerCase().trim() === vehicleNum
-  );
+// 6. Update Booking Status (For Admin Approval/Rejection)
+app.post("/api/bookings/:vehicleNumber/status", async (req, res) => {
+  const vehicleNum = req.params.vehicleNumber.trim();
+  try {
+    const updatedBooking = await Booking.findOneAndUpdate(
+      { vehicleNumber: { $regex: new RegExp("^" + vehicleNum + "$", "i") } },
+      { status: req.body.status },
+      { new: true }
+    );
 
-  if (!booking) return res.status(404).json({ message: "Booking not found" });
+    if (!updatedBooking) {
+      return res.status(404).json({ message: "Booking not found" });
+    }
 
-  booking.status = req.body.status; // e.g., "Completed"
-  console.log(`Booking ${vehicleNum} status updated to ${booking.status}`);
-  res.json({ message: "Status updated", booking });
+    console.log(`Vehicle ${vehicleNum} status updated to: ${updatedBooking.status}`);
+    res.json({ message: "Status updated", booking: updatedBooking });
+  } catch (err) {
+    console.error("Update Error:", err);
+    res.status(500).json({ message: "Error updating status" });
+  }
 });
 
-// Start server
+// Server Initialization
 const PORT = 5000;
 app.listen(PORT, () => {
-  console.log(`Server started on port ${PORT}`);
+  console.log(`🚀 Server started on port ${PORT}`);
 });
-
