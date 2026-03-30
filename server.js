@@ -5,11 +5,15 @@ const mongoose = require("mongoose");
 const app = express();
 
 // 1. MongoDB Connection
-mongoose.connect('mongodb://127.0.0.1:27017/vehicle_db')
+// Render-ல் வேலை செய்ய MongoDB Atlas லிங்க் தேவை. 
+// இல்லையெனில் லோக்கலில் மட்டும் வேலை செய்யும்.
+const mongoURI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/vehicle_db';
+
+mongoose.connect(mongoURI)
   .then(() => console.log('✅ MongoDB Connected Successfully!'))
   .catch(err => {
     console.error('❌ Database Connection Error:', err);
-    process.exit(1); 
+    // Render-ல் டேட்டாபேஸ் கனெக்ட் ஆகவில்லை என்றால் சர்வர் உடனே நின்றுவிடும் (503 Error)
   });
 
 // 2. Booking Schema & Model
@@ -21,12 +25,10 @@ const bookingSchema = new mongoose.Schema({
   status: { type: String, default: "Pending" },
   createdAt: { type: Date, default: Date.now }
 }, {
-  // This allows the frontend to see '_id' as 'id'
   toJSON: { virtuals: true },
   toObject: { virtuals: true }
 });
 
-// Virtual property to convert _id to id
 bookingSchema.virtual('id').get(function() {
   return this._id.toHexString();
 });
@@ -39,7 +41,6 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // --- Page Routes ---
-
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public/index.html"));
 });
@@ -52,7 +53,7 @@ app.get("/login.html", (req, res) => {
   res.sendFile(path.join(__dirname, "public/login.html"));
 });
 
-// --- API Routes (Data Handling) ---
+// --- API Routes ---
 
 // 3. Create New Booking
 app.post("/api/bookings", async (req, res) => {
@@ -63,50 +64,38 @@ app.post("/api/bookings", async (req, res) => {
       date: req.body.date,
       time: req.body.time
     });
-
     const savedBooking = await newBooking.save();
-    console.log("New booking saved:", savedBooking);
-    
-    res.json({ 
-      message: "Booking received and saved successfully", 
-      booking: savedBooking 
-    });
+    res.json({ message: "Booking saved", booking: savedBooking });
   } catch (err) {
-    console.error("Save Error:", err);
-    res.status(500).json({ message: "Error saving booking to database" });
+    res.status(500).json({ message: "Error saving booking" });
   }
 });
 
-// 4. View Booking Status (Search by Vehicle Number)
+// 4. View Status
 app.get("/api/bookings/:vehicleNumber", async (req, res) => {
   const vehicleNum = req.params.vehicleNumber.trim();
-  
   try {
     const booking = await Booking.findOne({ 
       vehicleNumber: { $regex: new RegExp("^" + vehicleNum + "$", "i") } 
     });
-
-    if (booking) {
-      res.json(booking);
-    } else {
-      res.status(404).json({ message: "Booking Not Found" });
-    }
+    if (booking) res.json(booking);
+    else res.status(404).json({ message: "Not Found" });
   } catch (err) {
-    res.status(500).json({ message: "Error fetching booking status" });
+    res.status(500).json({ message: "Error" });
   }
 });
 
-// 5. Get All Bookings (For Admin Dashboard)
+// 5. Get All Bookings
 app.get("/api/bookings", async (req, res) => {
   try {
     const allBookings = await Booking.find().sort({ createdAt: -1 });
     res.json(allBookings);
   } catch (err) {
-    res.status(500).json({ message: "Error fetching all bookings" });
+    res.status(500).json({ message: "Error" });
   }
 });
 
-// 6. Update Booking Status (For Admin Approval/Rejection)
+// 6. Update Status
 app.post("/api/bookings/:vehicleNumber/status", async (req, res) => {
   const vehicleNum = req.params.vehicleNumber.trim();
   try {
@@ -115,21 +104,15 @@ app.post("/api/bookings/:vehicleNumber/status", async (req, res) => {
       { status: req.body.status },
       { new: true }
     );
-
-    if (!updatedBooking) {
-      return res.status(404).json({ message: "Booking not found" });
-    }
-
-    console.log(`Vehicle ${vehicleNum} status updated to: ${updatedBooking.status}`);
-    res.json({ message: "Status updated", booking: updatedBooking });
+    if (!updatedBooking) return res.status(404).json({ message: "Not found" });
+    res.json({ message: "Updated", booking: updatedBooking });
   } catch (err) {
-    console.error("Update Error:", err);
-    res.status(500).json({ message: "Error updating status" });
+    res.status(500).json({ message: "Error updating" });
   }
 });
 
-// Server Initialization
-const PORT = 5000;
+// Server Initialization - Render-க்கு ஏற்றவாறு மாற்றப்பட்டுள்ளது
+const PORT = process.env.PORT || 5000; 
 app.listen(PORT, () => {
-  console.log(`🚀 Server started on port ${PORT}`);
+  console.log(`🚀 Server running on port ${PORT}`);
 });
