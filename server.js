@@ -1,19 +1,17 @@
 const express = require("express");
 const path = require("path");
 const mongoose = require("mongoose");
+const cors = require("cors"); // CORS மிக முக்கியம்
 
 const app = express();
 
 // 1. MongoDB Connection
-// Render-ல் வேலை செய்ய MongoDB Atlas லிங்க் தேவை. 
-// இல்லையெனில் லோக்கலில் மட்டும் வேலை செய்யும்.
 const mongoURI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/vehicle_db';
 
 mongoose.connect(mongoURI)
   .then(() => console.log('✅ MongoDB Connected Successfully!'))
   .catch(err => {
     console.error('❌ Database Connection Error:', err);
-    // Render-ல் டேட்டாபேஸ் கனெக்ட் ஆகவில்லை என்றால் சர்வர் உடனே நின்றுவிடும் (503 Error)
   });
 
 // 2. Booking Schema & Model
@@ -36,6 +34,7 @@ bookingSchema.virtual('id').get(function() {
 const Booking = mongoose.model('Booking', bookingSchema);
 
 // Middlewares
+app.use(cors()); // எல்லா இடத்திலிருந்தும் டேட்டாவை எடுக்க அனுமதிக்கும்
 app.use(express.static(path.join(__dirname, "public")));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -65,8 +64,9 @@ app.post("/api/bookings", async (req, res) => {
       time: req.body.time
     });
     const savedBooking = await newBooking.save();
-    res.json({ message: "Booking saved", booking: savedBooking });
+    res.status(201).json({ message: "Booking saved", booking: savedBooking });
   } catch (err) {
+    console.error("Save Error:", err);
     res.status(500).json({ message: "Error saving booking" });
   }
 });
@@ -85,13 +85,15 @@ app.get("/api/bookings/:vehicleNumber", async (req, res) => {
   }
 });
 
-// 5. Get All Bookings
+// 5. Get All Bookings (அட்மின் டேஷ்போர்டுக்காக)
 app.get("/api/bookings", async (req, res) => {
   try {
     const allBookings = await Booking.find().sort({ createdAt: -1 });
-    res.json(allBookings);
+    // ஒருவேளை டேட்டா இல்லையென்றால் காலியான அரே [] அனுப்பும், அப்போது 'forEach' எரர் வராது
+    res.status(200).json(allBookings || []);
   } catch (err) {
-    res.status(500).json({ message: "Error" });
+    console.error("Fetch All Error:", err);
+    res.status(500).json([]); // எரர் வந்தாலும் [] அனுப்புவது பாதுகாப்பானது
   }
 });
 
@@ -111,7 +113,7 @@ app.post("/api/bookings/:vehicleNumber/status", async (req, res) => {
   }
 });
 
-// Server Initialization - Render-க்கு ஏற்றவாறு மாற்றப்பட்டுள்ளது
+// Server Initialization
 const PORT = process.env.PORT || 5000; 
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
